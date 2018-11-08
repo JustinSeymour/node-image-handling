@@ -14,20 +14,30 @@ var server = http.createServer((req,res) => {
     var queryStringObject = parsedUrl.query;
 
     var headers = req.headers;
-
+    console.log(headers["content-type"]);
     let body = [];
-
+    let data = '';
     //req.setEncoding('binary');
 
-    req.on('data', (chunk) => {
-        body.push(chunk);
-    });
+    if (headers["content-type"] == 'image/jpeg') {
+        console.log('reached header if')
+        req.on('data', (chunk) => {
+            body.push(chunk);
+        });
+    } else {
+        req.setEncoding('utf-8');
+        req.on('data', (chunk) => {
+            data += chunk;
+        });
+    };
 
+    
     
 
     req.on('end', () => {
-        var imageBuffer = Buffer.concat(body);
-        let timeStamp = Date.now().toString();
+        if(headers["content-type"] == 'image/jpeg') {
+            var imageBuffer = Buffer.concat(body);
+            let timeStamp = Date.now().toString();
         _data.create('test',timeStamp, imageBuffer, '.jpeg', (err) => {
             if(!err) {
                 res.writeHead(200, {'Content-Type': 'image/jpeg' });
@@ -38,6 +48,11 @@ var server = http.createServer((req,res) => {
                 res.end();
             };
         });
+        } else {
+            imageBuffer += data;
+            res.writeHead(200, {'Content-Type': 'application/json' });
+            res.end(data);
+        }; 
     });
 });
 
